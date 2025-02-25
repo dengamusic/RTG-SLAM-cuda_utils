@@ -3,7 +3,7 @@ from typing import NamedTuple
 import torch
 import torch.nn as nn
 
-from . import _C_depth
+from . import _C
 
 def cpu_deep_copy_tuple(input_tuple):
     copied_tensors = [
