@@ -63,6 +63,8 @@ namespace CudaRasterizer
 			float *out_hit_depth_weight,
 			float *out_T,
 			int &tile_num,
+			int* out_gaussian,
+			float* out_gaussian_alphas,
 			int *radii = nullptr,
 			bool debug = false);
 

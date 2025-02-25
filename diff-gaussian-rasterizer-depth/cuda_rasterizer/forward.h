@@ -81,6 +81,8 @@ namespace FORWARD
 		int *out_hit_color,
 		float *out_hit_color_weight,
 		float *out_hit_depth_weight,
+		int* out_gaussian,
+		float* out_gaussian_alphas,
 		float *out_T);
 
 	void render_flat(
@@ -118,6 +120,8 @@ namespace FORWARD
 		float *out_hit_color_weight,
 		float *out_hit_depth_weight,
 		float *out_T,
+		int* out_gaussian,
+		float* out_gaussian_alphas,
 		float *out_weight_sum);
 }
 

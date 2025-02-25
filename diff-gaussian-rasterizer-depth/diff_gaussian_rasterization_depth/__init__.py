@@ -115,6 +115,8 @@ class _RasterizeGaussians(torch.autograd.Function):
                     binningBuffer,
                     imgBuffer,
                     tile_indices,
+                    gaussians,
+                    gaussian_alphas
                 ) = _C_depth.rasterize_gaussians(*args)
             except Exception as ex:
                 torch.save(cpu_args, "snapshot_fw.dump")
@@ -138,6 +140,8 @@ class _RasterizeGaussians(torch.autograd.Function):
                 binningBuffer,
                 imgBuffer,
                 tile_indices,
+                gaussians,
+                gaussian_alphas
             ) = _C_depth.rasterize_gaussians(*args)
 
         # Keep relevant tensors for backward
@@ -167,6 +171,8 @@ class _RasterizeGaussians(torch.autograd.Function):
             hit_depth_weight,
             T_map,
             radii,
+            gaussians,
+            gaussian_alphas
         )
 
     @staticmethod
@@ -180,6 +186,8 @@ class _RasterizeGaussians(torch.autograd.Function):
         grad_hit_depth_weight,
         grad_T_map,
         _,
+        grad_gauss_contr,
+        grad_gauss_alph
     ):
         # Restore necessary values from context
         num_rendered = ctx.num_rendered
@@ -276,6 +284,8 @@ class _RasterizeGaussians(torch.autograd.Function):
             grad_cov3Ds_precomp,
             None,
             None,
+            None,
+            None
         )
 
         return grads

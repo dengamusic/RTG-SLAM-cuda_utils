@@ -454,7 +454,9 @@ __global__ void __launch_bounds__(BLOCK_X *BLOCK_Y)
 		int *__restrict__ out_hit_color,
 		float *__restrict__ out_hit_color_weight,
 		float *__restrict__ out_hit_depth_weight,
-		float *__restrict__ out_T)
+		float *__restrict__ out_T,
+		int* __restrict__ out_gaussian,
+		float* __restrict__ out_gaussian_alphas)
 {
 	// Identify current tile and associated min/max pixel range.
 	auto block = cg::this_thread_block();
@@ -503,6 +505,8 @@ __global__ void __launch_bounds__(BLOCK_X *BLOCK_Y)
 	float color_weight_max = -1;
 	float hit_color_weight = 0.0;
 	float hit_depth_weight = 0.0;
+	int most_contributing_ind = -1;
+	float most_contributing_val = 0.0;
 	// Iterate over batches until all done or range is complete
 	for (int i = 0; i < rounds; i++, toDo -= BLOCK_SIZE)
 	{
@@ -608,6 +612,12 @@ __global__ void __launch_bounds__(BLOCK_X *BLOCK_Y)
 				// pixel.
 				last_contributor = contributor;
 				end_T = test_T;
+
+				if(alpha > most_contributing_val)
+				{
+					most_contributing_val = alpha;
+					most_contributing_ind = collected_id[j];
+				}
 			}
 			T = test_T;
 		}
@@ -627,6 +637,11 @@ __global__ void __launch_bounds__(BLOCK_X *BLOCK_Y)
 		out_hit_color_weight[pix_id] = hit_color_weight;
 		out_hit_depth_weight[pix_id] = hit_depth_weight;
 		out_T[pix_id] = end_T;
+		if(most_contributing_ind >= 0)
+		{
+			out_gaussian[pix_id] = most_contributing_ind;
+			out_gaussian_alphas[pix_id] = most_contributing_val;
+		}
 	}
 }
 
@@ -668,6 +683,8 @@ __global__ void __launch_bounds__(BLOCK_X *BLOCK_Y)
 		float *__restrict__ out_hit_color_weight,
 		float *__restrict__ out_hit_depth_weight,
 		float *__restrict__ out_T,
+		int* out_gaussian,
+		float* out_gaussian_alphas,
 		float *__restrict__ out_weight_sum)
 {
 	// Identify current tile and associated min/max pixel range.
@@ -726,6 +743,8 @@ __global__ void __launch_bounds__(BLOCK_X *BLOCK_Y)
 	float hit_color_weight = 0.0;
 	float hit_depth_weight = 0.0;
 	float weight_sum = 0.0f;
+	int most_contributing_ind = -1;
+	float most_contributing_val = 0.0;
 	// Iterate over batches until all done or range is complete
 	for (int i = 0; i < rounds; i++, toDo -= BLOCK_SIZE)
 	{
@@ -832,7 +851,14 @@ __global__ void __launch_bounds__(BLOCK_X *BLOCK_Y)
 				// pixel.
 				last_contributor = contributor;
 				end_T = test_T;
+
+				if(alpha > most_contributing_val)
+				{
+					most_contributing_val = alpha;
+					most_contributing_ind = collected_id[j];
+				}
 			}
+
 			T = test_T;
 		}
 	}
@@ -857,6 +883,11 @@ __global__ void __launch_bounds__(BLOCK_X *BLOCK_Y)
 		out_hit_depth_weight[pix_id] = hit_depth_weight;
 		out_weight_sum[pix_id] = weight_sum;
 		out_T[pix_id] = end_T;
+		if(most_contributing_ind >= 0)
+		{
+			out_gaussian[pix_id] = most_contributing_ind;
+			out_gaussian_alphas[pix_id] = most_contributing_val;
+		}
 	}
 }
 
@@ -890,6 +921,8 @@ void FORWARD::render(
 	int *out_hit_color,
 	float *out_hit_color_weight,
 	float *out_hit_depth_weight,
+	int* out_gaussian,
+	float* out_gaussian_alphas,
 	float *out_T)
 {
 	renderCUDA<NUM_CHANNELS><<<grid, block>>>(
@@ -920,7 +953,9 @@ void FORWARD::render(
 		out_hit_color,
 		out_hit_color_weight,
 		out_hit_depth_weight,
-		out_T);
+		out_T,
+		out_gaussian,
+		out_gaussian_alphas);
 }
 
 void FORWARD::render_flat(
@@ -958,6 +993,8 @@ void FORWARD::render_flat(
 	float *out_hit_color_weight,
 	float *out_hit_depth_weight,
 	float *out_T,
+	int* out_gaussian,
+	float* out_gaussian_alphas,
 	float *out_weight_sum)
 {
 	dim3 grid{tile_num, 1, 1};
@@ -993,6 +1030,8 @@ void FORWARD::render_flat(
 		out_hit_color_weight,
 		out_hit_depth_weight,
 		out_T,
+		out_gaussian,
+		out_gaussian_alphas,
 		out_weight_sum);
 }
 

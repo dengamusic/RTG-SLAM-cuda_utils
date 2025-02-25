@@ -238,6 +238,8 @@ int CudaRasterizer::Rasterizer::forward(
 	float *out_hit_depth_weight,
 	float *out_T,
 	int &tile_num,
+	int* out_gaussian,
+	float* out_gaussian_alphas,
 	int *radii,
 	bool debug)
 {
@@ -431,6 +433,8 @@ int CudaRasterizer::Rasterizer::forward(
 				   out_hit_color_weight,
 				   out_hit_depth_weight,
 				   out_T,
+				   out_gaussian,
+				   out_gaussian_alphas,
 				   imgState.weight_sum),
 			   debug)
 	return num_rendered;
